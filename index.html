@@ -1,163 +1,428 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schneider Electric - Inventory Dashboard</title>
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- XLSX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5n.js
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; }
-        .sidebar { background: linear-gradient(180deg, #1e2937, #0f172a); }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, #1e2937, #0f172a);
+        }
     </style>
 </head>
+
 <body class="bg-gray-100">
 
-<div class="flex h-screen">
+    <div class="flex h-screen">
 
-    <!-- Sidebar -->
-    <div class="w-64 sidebar text-white flex flex-col">
-        <div class="p-6 border-b border-white/10">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl">📦</div>
-                <div class="font-bold text-2xl">Schneider Electric</div>
-            </div>
-        </div>
-        <nav class="flex-1 p-4 space-y-1">
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white">
-                <i class="fa-solid fa-house"></i> Dashboard
-            </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition">
-                <i class="fa-solid fa-chart-bar"></i> WM Reports
-            </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition">
-                <i class="fa-solid fa-gem"></i> Valuable Materials
-            </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition">
-                <i class="fa-solid fa-truck"></i> 3PL & TOVR
-            </a>
-        </nav>
-    </div>
-
-    <!-- Main Content -->
-    <div class="flex-1 overflow-auto">
-        <!-- Top Bar -->
-        <div class="bg-white border-b px-8 py-5 flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold">Welcome back... 👋</h1>
-                <p class="text-gray-500">Thursday, July 23, 2026 • Week 30</p>
-            </div>
-            <div class="flex items-center gap-6">
-                <div class="relative">
-                    <input type="text" placeholder="Search materials..." 
-                           class="bg-gray-100 border border-gray-200 rounded-2xl px-5 py-3 pl-12 w-80 focus:outline-none focus:border-emerald-500">
-                    <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-gray-400"></i>
+        <!-- Sidebar -->
+        <div class="w-64 sidebar text-white flex flex-col">
+            <div class="p-6 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl">
+                        📦
+                    </div>
+                    <div class="font-bold text-2xl">
+                        Schneider Electric
+                    </div>
                 </div>
-                <button onclick="refreshDashboard()" 
+            </div>
+
+            <nav class="flex-1 p-4 space-y-1">
+                <a href="#"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10">
+    </a>
+
+                <a href="#"
+                    class="flex items-center gap-3 px-              WM Reports
+                </a>
+
+                #-4 py-3 rounded-xl hover:bg-white/10 transition">
+                    <i class="fa-solid fa-gem"></i>
+                    Valuable Materials
+                </a>
+
+                #-3 rounded-xl hover:bg-white/10 transition">
+                    <i class="fa-solid fa-truck"></i>
+                    3PL & TOVR
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+
+            <!-- Top Bar -->
+            <div
+                class="bg-white border-b px-8 py-5 flex items-center justify-between">
+
+                <div>
+                    <h1 class="text-2xl font-semibold">
+                        Welcome back... 👋
+                    </h1>
+                    <p class="text-gray-500">
+                        Thursday, July 23, 2026 • Week 30
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-4">
+
+                    <div class="relative">
+                        <input type="text"
+                            placeholder="Search materials..."
+                            class="bg-gray-100 border border-gray-200 rounded-2xl px-5 py-3 pl-12 w-80">
+
+                        <i
+                            class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-gray-400"></i>
+                    </div>
+
+                    <!-- Excel Upload -->
+                    <div class="flex items-center gap-2">
+
+                        <label
+                            class="cursor-pointer bg-white border border-gray-300 px-4 py-3 rounded-2xl hover:bg-gray-50">
+
+                            <i
+                                class="fa-solid fa-file-excel text-green-600"></i>
+                            Upload Excel
+
+                            <input type="file"
+                                id="excelFile"
+                                accept=".xlsx,.xls"
+                                class="hidden"
+                                onchange="loadExcelFile(event)">
+                        </label>
+
+                        <span id="fileName"
+                            class="text-sm text-gray-500">
+                            No file selected
+                        </span>
+                    </div>
+
+                    <button onclick="refreshDashboard()"
                         class="bg-emerald-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-emerald-700">
-                    <i class="fa-solid fa-sync"></i> Refresh
-                </button>
-            </div>
-        </div>
 
-        <div class="p-8">
+                        <i class="fa-solid fa-sync"></i>
+                        Refresh
+                    </button>
 
-            <!-- KPI Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
-                <div class="bg-white p-6 rounded-3xl shadow-sm">
-                    <p class="text-gray-500 text-sm">Total Book Value</p>
-                    <p class="text-3xl font-bold mt-2">$8.97M</p>
-                    <p class="text-emerald-600 text-sm mt-1">↑ 2.4% this week</p>
-                </div>
-                <div class="bg-white p-6 rounded-3xl shadow-sm">
-                    <p class="text-gray-500 text-sm">Overall Accuracy</p>
-                    <p class="text-3xl font-bold mt-2 text-emerald-600">99.2%</p>
-                    <p class="text-emerald-600 text-sm mt-1">Target: 96%</p>
-                </div>
-                <div class="bg-white p-6 rounded-3xl shadow-sm">
-                    <p class="text-gray-500 text-sm">Items Counted</p>
-                    <p class="text-3xl font-bold mt-2">17,774</p>
-                </div>
-                <div class="bg-white p-6 rounded-3xl shadow-sm">
-                    <p class="text-gray-500 text-sm">Bin Accuracy</p>
-                    <p class="text-3xl font-bold mt-2">98.0%</p>
-                </div>
-                <div class="bg-white p-6 rounded-3xl shadow-sm">
-                    <p class="text-gray-500 text-sm">Absolute Variance</p>
-                    <p class="text-3xl font-bold mt-2 text-amber-600">$49.3K</p>
                 </div>
             </div>
 
-            <!-- Charts Row -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Accuracy Trend -->
-                <div class="bg-white p-8 rounded-3xl shadow-sm">
-                    <h3 class="font-semibold mb-6">Weekly Accuracy Trend</h3>
-                    <canvas id="accuracyChart" height="110"></canvas>
+            <div class="p-8">
+
+                <!-- KPI Cards -->
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm">
+                        <p class="text-gray-500 text-sm">
+                            Total Book Value
+                        </p>
+                        <p id="totalBookValue"
+                            class="text-3xl font-bold mt-2">
+                            $8.97M
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm">
+                        <p class="text-gray-500 text-sm">
+                            Overall Accuracy
+                        </p>
+                        <p id="overallAccuracy"
+                            class="text-3xl font-bold mt-2 text-emerald-600">
+                            99.2%
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm">
+                        <p class="text-gray-500 text-sm">
+                            Items Counted
+                        </p>
+                        <p class="text-3xl font-bold mt-2">
+                            17,774
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm">
+                        <p class="text-gray-500 text-sm">
+                            Bin Accuracy
+                        </p>
+                        <p class="text-3xl font-bold mt-2">
+                            98.0%
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm">
+                        <p class="text-gray-500 text-sm">
+                            Absolute Variance
+                        </p>
+                        <p class="text-3xl font-bold mt-2 text-amber-600">
+                            $49.3K
+                        </p>
+                    </div>
+
                 </div>
 
-                <!-- Value Breakdown -->
-                <div class="bg-white p-8 rounded-3xl shadow-sm">
-                    <h3 class="font-semibold mb-6">Book Value by Week</h3>
-                    <canvas id="valueChart" height="110"></canvas>
-                </div>
-            </div>
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-            <!-- Recent Activity -->
-            <div class="mt-8 bg-white rounded-3xl shadow-sm p-8">
-                <h3 class="font-semibold mb-6">Recent WM01 Counts</h3>
-                <div id="recentTable" class="overflow-x-auto"></div>
+                    <div class="bg-white p-8 rounded-3xl shadow-sm">
+                        <h3 class="font-semibold mb-6">
+                            Weekly Accuracy Trend
+                        </h3>
+                        <canvas id="accuracyChart"></canvas>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-3xl shadow-sm">
+                        <h3 class="font-semibold mb-6">
+                            Book Value by Week
+                        </h3>
+                        <canvas id="valueChart"></canvas>
+                    </div>
+
+                </div>
+
+                <!-- Recent Activity -->
+                <div
+                    class="mt-8 bg-white rounded-3xl shadow-sm p-8">
+
+                    <h3 class="font-semibold mb-6">
+                        Recent WM01 Counts
+                    </h3>
+
+                    <div id="recentTable"></div>
+
+                </div>
+
             </div>
         </div>
     </div>
-</div>
 
-<script>
-    // Charts
-    new Chart(document.getElementById('accuracyChart'), {
-        type: 'line',
-        data: {
-            labels: ['W26','W27','W28','W29','W30'],
-            datasets: [
-                { label: 'Qty Accuracy', data: [99.97,99.93,99.92,99.74,100], borderColor: '#10b981', tension: 0.4, borderWidth: 4 },
-                { label: 'Value Accuracy', data: [99.86,99.63,99.87,99.40,100], borderColor: '#3b82f6', tension: 0.4, borderWidth: 4 }
-            ]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'top' }}}
-    });
+    <script>
 
-    new Chart(document.getElementById('valueChart'), {
-        type: 'bar',
-        data: {
-            labels: ['W26','W27','W28','W29','W30'],
-            datasets: [{ label: 'Book Value ($K)', data: [388,637,461,284,430], backgroundColor: '#4ade80' }]
-        },
-        options: { responsive: true }
-    });
+        const accuracyChart = new Chart(
+            document.getElementById('accuracyChart'),
+            {
+                type: 'line',
+                data: {
+                    labels: ['W26', 'W27', 'W28', 'W29', 'W30'],
+                    datasets: [
+                        {
+                            label: 'Qty Accuracy',
+                            data: [99.97, 99.93, 99.92, 99.74, 100],
+                            borderColor: '#10b981',
+                            tension: 0.4,
+                            borderWidth: 4
+                        },
+                        {
+                            label: 'Value Accuracy',
+                            data: [99.86, 99.63, 99.87, 99.40, 100],
+                            borderColor: '#3b82f6',
+                            tension: 0.4,
+                            borderWidth: 4
+                        }
+                    ]
+                }
+            }
+        );
 
-    // Recent Table
-    const tableHTML = `
-        <table class="w-full">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="text-left p-4">Week</th>
-                    <th class="text-left p-4">Counted</th>
-                    <th class="text-left p-4">Qty Acc.</th>
-                    <th class="text-left p-4">Value Acc.</th>
-                    <th class="text-left p-4">Bin Acc.</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y">
-                <tr><td class="p-4">2026 30</td><td class="p-4">84</td><td class="p-4 text-emerald-600">100%</td><td class="p-4 text-emerald-600">100%</td><td class="p-4 text-emerald-600">100%</td></tr>
-                <tr><td class="p-4">2026 29</td><td class="p-4">750</td><td class="p-4 text-emerald-600">99.74%</td><td class="p-4 text-emerald-600">99.40%</td><td class="p-4 text-amber-600">98.40%</td></tr>
-            </tbody>
-        </table>`;
-    document.getElementById('recentTable').innerHTML = tableHTML;
+        const valueChart = new Chart(
+            document.getElementById('valueChart'),
+            {
+                type: 'bar',
+                data: {
+                    labels: ['W26', 'W27', 'W28', 'W29', 'W30'],
+                    datasets: [
+                        {
+                            label: 'Book Value ($K)',
+                            data: [388, 637, 461, 284, 430],
+                            backgroundColor: '#4ade80'
+                        }
+                    ]
+                }
+            }
+        );
 
-    function refreshDashboard() {
-        alert("✅ Dashboard refreshed with latest data from your Excel file!");
-    }
-</script>
+        function loadExcelFile(event) {
+
+            const file = event.target.files[0];
+
+            if (!file) return;
+
+            document.getElementById('fileName').textContent =
+                file.name;
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+
+                const data = new Uint8Array(
+                    e.target.result
+                );
+
+                const workbook = XLSX.read(data, {
+                    type: 'array'
+                });
+
+                const sheetName =
+                    workbook.SheetNames[0];
+
+                const worksheet =
+                    workbook.Sheets[sheetName];
+
+                const jsonData =
+                    XLSX.utils.sheet_to_json(
+                        worksheet
+                    );
+
+                console.log(jsonData);
+
+                updateDashboard(jsonData);
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function updateDashboard(data) {
+
+            const weeks =
+                data.map(row => row["Week"]);
+
+            const qtyAccuracy =
+                data.map(row => row["Qty Accuracy"]);
+
+            const valueAccuracy =
+                data.map(row => row["Value Accuracy"]);
+
+            const bookValue =
+                data.map(row => row["Book Value"]);
+
+            accuracyChart.data.labels = weeks;
+            accuracyChart.data.datasets[0].data =
+                qtyAccuracy;
+            accuracyChart.data.datasets[1].data =
+                valueAccuracy;
+            accuracyChart.update();
+
+            valueChart.data.labels = weeks;
+            valueChart.data.datasets[0].data =
+                bookValue;
+            valueChart.update();
+
+            const totalValue =
+                bookValue.reduce(
+                    (a, b) => a + Number(b),
+                    0
+                );
+
+            document.getElementById(
+                "totalBookValue"
+            ).innerText =
+                '$' + totalValue.toLocaleString() + 'K';
+
+            const avgAccuracy =
+                (
+                    qtyAccuracy.reduce(
+                        (a, b) => a + Number(b),
+                        0
+                    ) / qtyAccuracy.length
+                ).toFixed(2);
+
+            document.getElementById(
+                "overallAccuracy"
+            ).innerText =
+                avgAccuracy + '%';
+
+            buildTable(data);
+
+            alert(
+                "✅ Excel file uploaded successfully!"
+            );
+        }
+
+        function buildTable(data) {
+
+            let html = `
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="text-left p-4">Week</th>
+                            <th class="text-left p-4">Qty Accuracy</th>
+                            <th class="text-left p-4">Value Accuracy</th>
+                            <th class="text-left p-4">Book Value</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+            `;
+
+            data.forEach(row => {
+
+                html += `
+                    <tr>
+                        <td class="p-4">${row['Week']}</td>
+                        <td class="p-4">${row['Qty Accuracy']}%</td>
+                        <td class="p-4">${row['Value Accuracy']}%</td>
+                        <td class="p-4">$${row['Book Value']}K</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById(
+                'recentTable'
+            ).innerHTML = html;
+        }
+
+        function refreshDashboard() {
+
+            alert(
+                "✅ Dashboard refreshed successfully!"
+            );
+
+        }
+
+        buildTable([
+            {
+                Week: 'W30',
+                'Qty Accuracy': 100,
+                'Value Accuracy': 100,
+                'Book Value': 430
+            },
+            {
+                Week: 'W29',
+                'Qty Accuracy': 99.74,
+                'Value Accuracy': 99.40,
+                'Book Value': 284
+            }
+        ]);
+
+    </script>
+
 </body>
+
 </html>
