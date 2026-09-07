@@ -7,10 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.jsscript.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; }
         .sidebar { background: linear-gradient(180deg, #1e2937, #0f172a); }
+        .hidden-input { display: none; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -38,7 +39,7 @@
             <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition">
                 <i class="fa-solid fa-truck"></i> 3PL & TOVR
             </a>
-            
+
         </nav>
     </div>
 
@@ -52,18 +53,19 @@
             </div>
             <div class="flex items-center gap-6">
                 <div class="relative">
-                    <input type="text" placeholder="Search materials..." 
+                    <input type="text" placeholder="Search materials..."
                            class="bg-gray-100 border border-gray-200 rounded-2xl px-5 py-3 pl-12 w-80 focus:outline-none focus:border-emerald-500">
                     <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-gray-400"></i>
                 </div>
-                <button onclick="refreshDashboard()" 
+                <button onclick="refreshDashboard()"
                         class="bg-emerald-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-emerald-700">
                     <i class="fa-solid fa-sync"></i> Refresh-ALL
                 </button>
-                <button onclick="handleFile()" 
+                <button onclick="document.getElementById('excelFile').click()"
                         class="bg-emerald-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-emerald-700">
                     <i class="fa-solid fa-arrow-up-from-bracket"></i> Upload File
                 </button>
+                <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" class="hidden-input">
             </div>
         </div>
 
@@ -73,25 +75,25 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
                 <div class="bg-white p-6 rounded-3xl shadow-sm">
                     <p class="text-gray-500 text-sm">Total Book Value</p>
-                    <p class="text-3xl font-bold mt-2">$8.97M</p>
+                    <p class="text-3xl font-bold mt-2" id="kpiBookValue">$8.97M</p>
                     <p class="text-emerald-600 text-sm mt-1">↑ 2.4% this week</p>
                 </div>
                 <div class="bg-white p-6 rounded-3xl shadow-sm">
                     <p class="text-gray-500 text-sm">Overall Accuracy</p>
-                    <p class="text-3xl font-bold mt-2 text-emerald-600">99.2%</p>
+                    <p class="text-3xl font-bold mt-2 text-emerald-600" id="kpiAccuracy">99.2%</p>
                     <p class="text-emerald-600 text-sm mt-1">Target: 96%</p>
                 </div>
                 <div class="bg-white p-6 rounded-3xl shadow-sm">
                     <p class="text-gray-500 text-sm">Items Counted</p>
-                    <p class="text-3xl font-bold mt-2">17,774</p>
+                    <p class="text-3xl font-bold mt-2" id="kpiCounted">17,774</p>
                 </div>
                 <div class="bg-white p-6 rounded-3xl shadow-sm">
                     <p class="text-gray-500 text-sm">Bin Accuracy</p>
-                    <p class="text-3xl font-bold mt-2">98.0%</p>
+                    <p class="text-3xl font-bold mt-2" id="kpiBinAccuracy">98.0%</p>
                 </div>
                 <div class="bg-white p-6 rounded-3xl shadow-sm">
                     <p class="text-gray-500 text-sm">Absolute Variance</p>
-                    <p class="text-3xl font-bold mt-2 text-amber-600">$49.3K</p>
+                    <p class="text-3xl font-bold mt-2 text-amber-600" id="kpiVariance">$49.3K</p>
                 </div>
             </div>
 
@@ -120,81 +122,160 @@
 </div>
 
 <script>
-    // Charts
-    new Chart(document.getElementById('accuracyChart'), {
-        type: 'line',
-        data: {
-            labels: ['W26','W27','W28','W29','W30'],
-            datasets: [
-                { label: 'Qty Accuracy', data: [99.97,99.93,99.92,99.74,100], borderColor: '#10b981', tension: 0.4, borderWidth: 4 },
-                { label: 'Value Accuracy', data: [99.86,99.63,99.87,99.40,100], borderColor: '#3b82f6', tension: 0.4, borderWidth: 4 }
-            ]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'top' }}}
-    });
+    let accuracyChart, valueChart;
 
-    new Chart(document.getElementById('valueChart'), {
-        type: 'bar',
-        data: {
-            labels: ['W26','W27','W28','W29','W30'],
-            datasets: [{ label: 'Book Value ($K)', data: [388,637,461,284,430], backgroundColor: '#4ade80' }]
-        },
-        options: { responsive: true }
-    });
+    // Default seed data
+    const defaultWeeks = ['W26','W27','W28','W29','W30'];
+    const defaultQtyAcc = [99.97,99.93,99.92,99.74,100];
+    const defaultValAcc = [99.86,99.63,99.87,99.40,100];
+    const defaultBookValue = [388,637,461,284,430];
+    const defaultRecent = [
+        { week: '2026 30', counted: 84,  qtyAcc: 100,   valAcc: 100,   binAcc: 100 },
+        { week: '2026 29', counted: 750, qtyAcc: 99.74, valAcc: 99.40, binAcc: 98.40 }
+    ];
 
-    // Recent Table
-    const tableHTML = `
-        <table class="w-full">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="text-left p-4">Week</th>
-                    <th class="text-left p-4">Counted</th>
-                    <th class="text-left p-4">Qty Acc.</th>
-                    <th class="text-left p-4">Value Acc.</th>
-                    <th class="text-left p-4">Bin Acc.</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y">
-                <tr><td class="p-4">2026 30</td><td class="p-4">84</td><td class="p-4 text-emerald-600">100%</td><td class="p-4 text-emerald-600">100%</td><td class="p-4 text-emerald-600">100%</td></tr>
-                <tr><td class="p-4">2026 29</td><td class="p-4">750</td><td class="p-4 text-emerald-600">99.74%</td><td class="p-4 text-emerald-600">99.40%</td><td class="p-4 text-amber-600">98.40%</td></tr>
-            </tbody>
-        </table>`;
-    document.getElementById('recentTable').innerHTML = tableHTML;
+    function renderCharts(weeks, qtyAcc, valAcc, bookValue) {
+        if (accuracyChart) accuracyChart.destroy();
+        if (valueChart) valueChart.destroy();
+
+        accuracyChart = new Chart(document.getElementById('accuracyChart'), {
+            type: 'line',
+            data: {
+                labels: weeks,
+                datasets: [
+                    { label: 'Qty Accuracy', data: qtyAcc, borderColor: '#10b981', tension: 0.4, borderWidth: 4 },
+                    { label: 'Value Accuracy', data: valAcc, borderColor: '#3b82f6', tension: 0.4, borderWidth: 4 }
+                ]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+
+        valueChart = new Chart(document.getElementById('valueChart'), {
+            type: 'bar',
+            data: {
+                labels: weeks,
+                datasets: [{ label: 'Book Value ($K)', data: bookValue, backgroundColor: '#4ade80' }]
+            },
+            options: { responsive: true }
+        });
+    }
+
+    function pctClass(v) {
+        const n = parseFloat(v);
+        if (isNaN(n)) return '';
+        return n >= 99 ? 'text-emerald-600' : (n >= 97 ? 'text-amber-600' : 'text-red-600');
+    }
+
+    function fmtPct(v) {
+        const n = parseFloat(v);
+        return isNaN(n) ? v : n.toFixed(2) + '%';
+    }
+
+    function populateTable(rows) {
+        if (!rows || !rows.length) {
+            document.getElementById('recentTable').innerHTML =
+                '<p class="text-gray-500 p-4">No rows found in the uploaded file.</p>';
+            return;
+        }
+
+        // Try to map common column names; fall back to raw keys if not found
+        const keyMap = {
+            week: ['Week', 'week', 'WEEK'],
+            counted: ['Counted', 'counted', 'Items Counted', 'ItemsCounted'],
+            qtyAcc: ['Qty Acc', 'Qty Accuracy', 'qtyAcc', 'Quantity Accuracy'],
+            valAcc: ['Value Acc', 'Value Accuracy', 'valAcc', 'ValueAccuracy'],
+            binAcc: ['Bin Acc', 'Bin Accuracy', 'binAcc', 'BinAccuracy']
+        };
+
+        function pick(row, candidates) {
+            for (const c of candidates) {
+                if (row[c] !== undefined) return row[c];
+            }
+            return '—';
+        }
+
+        const bodyRows = rows.map(row => {
+            const week = pick(row, keyMap.week);
+            const counted = pick(row, keyMap.counted);
+            const qtyAcc = pick(row, keyMap.qtyAcc);
+            const valAcc = pick(row, keyMap.valAcc);
+            const binAcc = pick(row, keyMap.binAcc);
+            return `<tr>
+                <td class="p-4">${week}</td>
+                <td class="p-4">${counted}</td>
+                <td class="p-4 ${pctClass(qtyAcc)}">${fmtPct(qtyAcc)}</td>
+                <td class="p-4 ${pctClass(valAcc)}">${fmtPct(valAcc)}</td>
+                <td class="p-4 ${pctClass(binAcc)}">${fmtPct(binAcc)}</td>
+            </tr>`;
+        }).join('');
+
+        const tableHTML = `
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="text-left p-4">Week</th>
+                        <th class="text-left p-4">Counted</th>
+                        <th class="text-left p-4">Qty Acc.</th>
+                        <th class="text-left p-4">Value Acc.</th>
+                        <th class="text-left p-4">Bin Acc.</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    ${bodyRows}
+                </tbody>
+            </table>`;
+        document.getElementById('recentTable').innerHTML = tableHTML;
+    }
 
     function refreshDashboard() {
-        alert("✅ Dashboard refreshed with latest data from your Excel file!");
+        renderCharts(defaultWeeks, defaultQtyAcc, defaultValAcc, defaultBookValue);
+        populateTable(defaultRecent);
+        alert("✅ Dashboard refreshed with latest data!");
+    }
+
+    function handleFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                console.log(jsonData);
+
+                populateTable(jsonData);
+
+                alert(`✅ Loaded ${jsonData.length} rows from ${file.name}`);
+            } catch (err) {
+                console.error(err);
+                alert('⚠️ Could not read that file. Please upload a valid .xlsx, .xls, or .csv file.');
+            } finally {
+                // reset so selecting the same file again still fires 'change'
+                event.target.value = '';
+            }
+        };
+
+        reader.onerror = function () {
+            alert('⚠️ Error reading the file.');
+        };
+
+        reader.readAsArrayBuffer(file);
     }
 
     document.getElementById('excelFile').addEventListener('change', handleFile);
 
-function handleFile(event) {
-    const file = event.target.files[0];
-
-    if (!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-
-        const workbook = XLSX.read(data, {
-            type: 'array'
-        });
-
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        console.log(jsonData);
-
-        populateTable(jsonData);
-
-        alert(`✅ Loaded ${jsonData.length} rows from Excel`);
-    };
-
-    reader.readAsArrayBuffer(file);
-}
+    // Initial render
+    renderCharts(defaultWeeks, defaultQtyAcc, defaultValAcc, defaultBookValue);
+    populateTable(defaultRecent);
+</script>
+</body>
+</html>
 </script>
 </body>
 </html>
