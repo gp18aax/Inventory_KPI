@@ -75,7 +75,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
                 <div class="bg-white p-6 rounded-3xl shadow-sm">
                     <p class="text-gray-500 text-sm">Total Book Value</p>
-                    <p class="text-3xl font-bold mt-2" id="kpiBookValue">$8.97M</p>
+                    <p class="text-3xl font-bold mt-2" id="kpiBookValue">£8.97M</p>
                     <p class="text-emerald-600 text-sm mt-1">↑ 2.4% this week</p>
                 </div>
                 <div class="bg-white p-6 rounded-3xl shadow-sm">
@@ -93,7 +93,7 @@
                 </div>
                 <div class="bg-white p-6 rounded-3xl shadow-sm">
                     <p class="text-gray-500 text-sm">Absolute Variance</p>
-                    <p class="text-3xl font-bold mt-2 text-amber-600" id="kpiVariance">$49.3K</p>
+                    <p class="text-3xl font-bold mt-2 text-amber-600" id="kpiVariance">£49.3K</p>
                 </div>
             </div>
 
@@ -154,7 +154,7 @@
             type: 'bar',
             data: {
                 labels: weeks,
-                datasets: [{ label: 'Book Value ($K)', data: bookValue, backgroundColor: '#4ade80' }]
+                datasets: [{ label: 'Book Value (£K)', data: bookValue, backgroundColor: '#4ade80' }]
             },
             options: { responsive: true }
         });
@@ -201,11 +201,11 @@
             const valAcc = pick(row, keyMap.valAcc);
             const binAcc = pick(row, keyMap.binAcc);
             return `<tr>
-                <td class="p-4">${week}</td>
-                <td class="p-4">${counted}</td>
-                <td class="p-4 ${pctClass(qtyAcc)}">${fmtPct(qtyAcc)}</td>
-                <td class="p-4 ${pctClass(valAcc)}">${fmtPct(valAcc)}</td>
-                <td class="p-4 ${pctClass(binAcc)}">${fmtPct(binAcc)}</td>
+                <td class="p-4">£{week}</td>
+                <td class="p-4">£{counted}</td>
+                <td class="p-4 £{pctClass(qtyAcc)}">£{fmtPct(qtyAcc)}</td>
+                <td class="p-4 £{pctClass(valAcc)}">£{fmtPct(valAcc)}</td>
+                <td class="p-4 £{pctClass(binAcc)}">£{fmtPct(binAcc)}</td>
             </tr>`;
         }).join('');
 
@@ -221,7 +221,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y">
-                    ${bodyRows}
+                    £{bodyRows}
                 </tbody>
             </table>`;
         document.getElementById('recentTable').innerHTML = tableHTML;
@@ -251,7 +251,7 @@
 
                 populateTable(jsonData);
 
-                alert(`✅ Loaded ${jsonData.length} rows from ${file.name}`);
+                alert(`✅ Loaded £{jsonData.length} rows from £{file.name}`);
             } catch (err) {
                 console.error(err);
                 alert('⚠️ Could not read that file. Please upload a valid .xlsx, .xls, or .csv file.');
