@@ -201,11 +201,11 @@
             const valAcc = pick(row, keyMap.valAcc);
             const binAcc = pick(row, keyMap.binAcc);
             return `<tr>
-                <td class="p-4">£{week}</td>
-                <td class="p-4">£{counted}</td>
-                <td class="p-4 £{pctClass(qtyAcc)}">£{fmtPct(qtyAcc)}</td>
-                <td class="p-4 £{pctClass(valAcc)}">£{fmtPct(valAcc)}</td>
-                <td class="p-4 £{pctClass(binAcc)}">£{fmtPct(binAcc)}</td>
+                <td class="p-4">${week}</td>
+                <td class="p-4">${counted}</td>
+                <td class="p-4 ${pctClass(qtyAcc)}">${fmtPct(qtyAcc)}</td>
+                <td class="p-4 ${pctClass(valAcc)}">${fmtPct(valAcc)}</td>
+                <td class="p-4 ${pctClass(binAcc)}">${fmtPct(binAcc)}</td>
             </tr>`;
         }).join('');
 
