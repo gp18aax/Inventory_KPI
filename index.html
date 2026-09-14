@@ -37,7 +37,7 @@
                 <i class="fa-solid fa-gem"></i> Valuable Materials
             </a>
             <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition">
-                <i class="fa-solid fa-truck"></i> 3PL
+                <i class="fa-solid fa-truck"></i> 3PL & TOVR
             </a>
 
         </nav>
@@ -48,8 +48,8 @@
         <!-- Top Bar -->
         <div class="bg-white border-b px-8 py-5 flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-semibold">Welcome back, All 👋</h1>
-                <p class="text-gray-500">Thursday, July 23, 2026 • Week 30</p>
+                <h1 class="text-2xl font-semibold">Welcome back, Alex 👋</h1>
+                <p class="text-gray-500" id="dateLine">Thursday, July 23, 2026 • Week 30</p>
             </div>
             <div class="flex items-center gap-6">
                 <div class="relative">
@@ -65,8 +65,17 @@
                         class="bg-emerald-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-emerald-700">
                     <i class="fa-solid fa-arrow-up-from-bracket"></i> Upload File
                 </button>
-                <input type="file" id="excelFile" accept=".xlsx,.xls,.csv,.xlsm" class="hidden-input">
+                <input type="file" id="excelFile" accept=".xlsx,.xls,.xlsm,.csv" class="hidden-input">
+                <button onclick="resetToSampleData()" title="Clear saved upload and restore sample data"
+                        class="text-gray-400 hover:text-gray-600 px-3 py-3">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
             </div>
+        </div>
+
+        <div id="uploadBanner" class="hidden mx-8 mt-6 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl px-5 py-3 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-circle-check"></i>
+            <span id="uploadBannerText"></span>
         </div>
 
         <div class="p-8">
@@ -75,8 +84,8 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
                 <div class="bg-white p-6 rounded-3xl shadow-sm">
                     <p class="text-gray-500 text-sm">Total Book Value</p>
-                    <p class="text-3xl font-bold mt-2" id="kpiBookValue">£8.97M</p>
-                    <p class="text-emerald-600 text-sm mt-1">↑ 2.4% this week</p>
+                    <p class="text-3xl font-bold mt-2" id="kpiBookValue">$8.97M</p>
+                    <p class="text-emerald-600 text-sm mt-1" id="kpiBookValueSub">↑ 2.4% this week</p>
                 </div>
                 <div class="bg-white p-6 rounded-3xl shadow-sm">
                     <p class="text-gray-500 text-sm">Overall Accuracy</p>
@@ -93,7 +102,7 @@
                 </div>
                 <div class="bg-white p-6 rounded-3xl shadow-sm">
                     <p class="text-gray-500 text-sm">Absolute Variance</p>
-                    <p class="text-3xl font-bold mt-2 text-amber-600" id="kpiVariance">£49.3K</p>
+                    <p class="text-3xl font-bold mt-2 text-amber-600" id="kpiVariance">$49.3K</p>
                 </div>
             </div>
 
@@ -114,7 +123,7 @@
 
             <!-- Recent Activity -->
             <div class="mt-8 bg-white rounded-3xl shadow-sm p-8">
-                <h3 class="font-semibold mb-6">Recent WM01 Counts</h3>
+                <h3 class="font-semibold mb-6" id="tableHeading">Recent WM01 Counts</h3>
                 <div id="recentTable" class="overflow-x-auto"></div>
             </div>
         </div>
@@ -133,6 +142,40 @@
         { week: '2026 30', counted: 84,  qtyAcc: 100,   valAcc: 100,   binAcc: 100 },
         { week: '2026 29', counted: 750, qtyAcc: 99.74, valAcc: 99.40, binAcc: 98.40 }
     ];
+    const defaultKpis = {
+        bookValue: '$8.97M',
+        bookValueSub: '↑ 2.4% this week',
+        accuracy: '99.2%',
+        counted: '17,774',
+        binAccuracy: '98.0%',
+        variance: '$49.3K'
+    };
+
+    // Column name variants we'll try to match against uploaded headers
+    const keyMap = {
+        week: ['Week', 'week', 'WEEK'],
+        counted: ['Counted', 'counted', 'Items Counted', 'ItemsCounted'],
+        qtyAcc: ['Qty Acc', 'Qty Accuracy', 'qtyAcc', 'Quantity Accuracy'],
+        valAcc: ['Value Acc', 'Value Accuracy', 'valAcc', 'ValueAccuracy'],
+        binAcc: ['Bin Acc', 'Bin Accuracy', 'binAcc', 'BinAccuracy'],
+        bookValue: ['Book Value', 'BookValue', 'bookValue', 'Value ($K)', 'Value'],
+        variance: ['Variance', 'variance', 'Abs Variance', 'AbsVariance', 'Absolute Variance']
+    };
+
+    function pick(row, candidates) {
+        for (const c of candidates) {
+            if (row[c] !== undefined && row[c] !== '') return row[c];
+        }
+        return undefined;
+    }
+
+    function toNumber(v) {
+        if (v === undefined || v === null) return NaN;
+        if (typeof v === 'number') return v;
+        // strip currency symbols, commas, % signs
+        const cleaned = String(v).replace(/[^0-9.\-]/g, '');
+        return cleaned === '' ? NaN : parseFloat(cleaned);
+    }
 
     function renderCharts(weeks, qtyAcc, valAcc, bookValue) {
         if (accuracyChart) accuracyChart.destroy();
@@ -154,7 +197,7 @@
             type: 'bar',
             data: {
                 labels: weeks,
-                datasets: [{ label: 'Book Value (£K)', data: bookValue, backgroundColor: '#4ade80' }]
+                datasets: [{ label: 'Book Value ($K)', data: bookValue, backgroundColor: '#4ade80' }]
             },
             options: { responsive: true }
         });
@@ -178,28 +221,12 @@
             return;
         }
 
-        // Try to map common column names; fall back to raw keys if not found
-        const keyMap = {
-            week: ['Week', 'week', 'WEEK'],
-            counted: ['Counted', 'counted', 'Items Counted', 'ItemsCounted'],
-            qtyAcc: ['Qty Acc', 'Qty Accuracy', 'qtyAcc', 'Quantity Accuracy'],
-            valAcc: ['Value Acc', 'Value Accuracy', 'valAcc', 'ValueAccuracy'],
-            binAcc: ['Bin Acc', 'Bin Accuracy', 'binAcc', 'BinAccuracy']
-        };
-
-        function pick(row, candidates) {
-            for (const c of candidates) {
-                if (row[c] !== undefined) return row[c];
-            }
-            return '—';
-        }
-
         const bodyRows = rows.map(row => {
-            const week = pick(row, keyMap.week);
-            const counted = pick(row, keyMap.counted);
-            const qtyAcc = pick(row, keyMap.qtyAcc);
-            const valAcc = pick(row, keyMap.valAcc);
-            const binAcc = pick(row, keyMap.binAcc);
+            const week = pick(row, keyMap.week) ?? '—';
+            const counted = pick(row, keyMap.counted) ?? '—';
+            const qtyAcc = pick(row, keyMap.qtyAcc) ?? '—';
+            const valAcc = pick(row, keyMap.valAcc) ?? '—';
+            const binAcc = pick(row, keyMap.binAcc) ?? '—';
             return `<tr>
                 <td class="p-4">${week}</td>
                 <td class="p-4">${counted}</td>
@@ -227,10 +254,150 @@
         document.getElementById('recentTable').innerHTML = tableHTML;
     }
 
+    function setKpis(kpis) {
+        document.getElementById('kpiBookValue').textContent = kpis.bookValue;
+        document.getElementById('kpiBookValueSub').textContent = kpis.bookValueSub;
+        document.getElementById('kpiAccuracy').textContent = kpis.accuracy;
+        document.getElementById('kpiCounted').textContent = kpis.counted;
+        document.getElementById('kpiBinAccuracy').textContent = kpis.binAccuracy;
+        document.getElementById('kpiVariance').textContent = kpis.variance;
+    }
+
+    function average(nums) {
+        const valid = nums.filter(n => !isNaN(n));
+        if (!valid.length) return NaN;
+        return valid.reduce((a, b) => a + b, 0) / valid.length;
+    }
+
+    function sum(nums) {
+        return nums.filter(n => !isNaN(n)).reduce((a, b) => a + b, 0);
+    }
+
+    // Build KPI values + chart series directly from the uploaded rows
+    function computeFromRows(rows) {
+        const weeks = rows.map(r => String(pick(r, keyMap.week) ?? ''));
+        const countedNums = rows.map(r => toNumber(pick(r, keyMap.counted)));
+        const qtyAccNums = rows.map(r => toNumber(pick(r, keyMap.qtyAcc)));
+        const valAccNums = rows.map(r => toNumber(pick(r, keyMap.valAcc)));
+        const binAccNums = rows.map(r => toNumber(pick(r, keyMap.binAcc)));
+        const bookValueNums = rows.map(r => toNumber(pick(r, keyMap.bookValue)));
+        const varianceNums = rows.map(r => toNumber(pick(r, keyMap.variance)));
+
+        const totalCounted = sum(countedNums);
+        const avgQtyAcc = average(qtyAccNums);
+        const avgValAcc = average(valAccNums);
+        const avgBinAcc = average(binAccNums);
+        const totalBookValue = sum(bookValueNums);
+        const totalVariance = sum(varianceNums);
+
+        const overallAccuracy = average([avgQtyAcc, avgValAcc].filter(n => !isNaN(n)));
+
+        const kpis = {
+            bookValue: bookValueNums.some(n => !isNaN(n)) ? `$${totalBookValue.toLocaleString(undefined, {maximumFractionDigits: 1})}K` : defaultKpis.bookValue,
+            bookValueSub: `${rows.length} row${rows.length === 1 ? '' : 's'} loaded`,
+            accuracy: !isNaN(overallAccuracy) ? `${overallAccuracy.toFixed(1)}%` : defaultKpis.accuracy,
+            counted: countedNums.some(n => !isNaN(n)) ? totalCounted.toLocaleString() : defaultKpis.counted,
+            binAccuracy: !isNaN(avgBinAcc) ? `${avgBinAcc.toFixed(1)}%` : defaultKpis.binAccuracy,
+            variance: varianceNums.some(n => !isNaN(n)) ? `$${totalVariance.toLocaleString(undefined, {maximumFractionDigits: 1})}K` : defaultKpis.variance
+        };
+
+        return {
+            weeks,
+            qtyAcc: qtyAccNums,
+            valAcc: valAccNums,
+            bookValue: bookValueNums,
+            kpis
+        };
+    }
+
+    function updateDashboardFromRows(rows, sourceLabel, options) {
+        const opts = options || {};
+        populateTable(rows);
+
+        const { weeks, qtyAcc, valAcc, bookValue, kpis } = computeFromRows(rows);
+
+        // Only re-chart if we actually found usable week/accuracy/value columns,
+        // otherwise keep the existing chart so we don't plot blank/NaN series.
+        const hasWeeks = weeks.some(w => w && w !== '—');
+        const hasAccuracy = qtyAcc.some(n => !isNaN(n)) || valAcc.some(n => !isNaN(n));
+        const hasValue = bookValue.some(n => !isNaN(n));
+
+        if (hasWeeks && (hasAccuracy || hasValue)) {
+            renderCharts(
+                weeks,
+                hasAccuracy ? qtyAcc : weeks.map(() => null),
+                hasAccuracy ? valAcc : weeks.map(() => null),
+                hasValue ? bookValue : weeks.map(() => 0)
+            );
+        }
+
+        setKpis(kpis);
+
+        document.getElementById('tableHeading').textContent = sourceLabel
+            ? `Recent Counts — ${sourceLabel}`
+            : 'Recent WM01 Counts';
+
+        const banner = document.getElementById('uploadBanner');
+        const bannerText = document.getElementById('uploadBannerText');
+        bannerText.textContent = `Loaded ${rows.length} row${rows.length === 1 ? '' : 's'} from ${sourceLabel}. KPIs and charts updated from this file.`;
+        banner.classList.remove('hidden');
+
+        if (!opts.skipSave) {
+            saveAsDefault(rows, sourceLabel);
+        }
+    }
+
     function refreshDashboard() {
+        // Re-run against whatever is currently saved as default (uploaded data, if any)
+        loadSavedOrDefault();
+        alert("✅ Dashboard refreshed!");
+    }
+
+    const STORAGE_KEY = 'invora-dashboard-data';
+
+    function saveAsDefault(rows, sourceLabel) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows, sourceLabel, savedAt: Date.now() }));
+        } catch (err) {
+            // localStorage can fail if disabled, in private browsing, or over quota
+            console.error('Could not save uploaded data as default:', err);
+        }
+    }
+
+    function resetToSampleData() {
+        try {
+            localStorage.removeItem(STORAGE_KEY);
+        } catch (err) {
+            console.log('Nothing to clear, or clearing failed:', err);
+        }
         renderCharts(defaultWeeks, defaultQtyAcc, defaultValAcc, defaultBookValue);
         populateTable(defaultRecent);
-        alert("✅ Dashboard refreshed with latest data!");
+        setKpis(defaultKpis);
+        document.getElementById('tableHeading').textContent = 'Recent WM01 Counts';
+        document.getElementById('uploadBanner').classList.add('hidden');
+    }
+
+    function loadSavedOrDefault() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                const saved = JSON.parse(raw);
+                if (saved && Array.isArray(saved.rows) && saved.rows.length) {
+                    updateDashboardFromRows(saved.rows, saved.sourceLabel, { skipSave: true });
+                    const banner = document.getElementById('uploadBanner');
+                    const bannerText = document.getElementById('uploadBannerText');
+                    const when = saved.savedAt ? new Date(saved.savedAt).toLocaleString() : '';
+                    bannerText.textContent = `Showing saved data from ${saved.sourceLabel || 'an uploaded file'}${when ? ' (uploaded ' + when + ')' : ''}. Use the reset icon to restore sample data.`;
+                    banner.classList.remove('hidden');
+                    return;
+                }
+            }
+        } catch (err) {
+            // No saved data yet, or localStorage unavailable — fall through to defaults
+        }
+        renderCharts(defaultWeeks, defaultQtyAcc, defaultValAcc, defaultBookValue);
+        populateTable(defaultRecent);
+        setKpis(defaultKpis);
     }
 
     function handleFile(event) {
@@ -249,12 +416,12 @@
 
                 console.log(jsonData);
 
-                populateTable(jsonData);
+                updateDashboardFromRows(jsonData, file.name);
 
-                alert(`✅ Loaded ${jsonData.length} rows from ${file.name}`);
+                alert(`✅ Loaded ${jsonData.length} rows from ${file.name}. KPIs and charts have been updated.`);
             } catch (err) {
                 console.error(err);
-                alert('⚠️ Could not read that file. Please upload a valid .xlsx, .xls, or .csv file.');
+                alert('⚠️ Could not read that file. Please upload a valid .xlsx, .xls, .xlsm, or .csv file.');
             } finally {
                 // reset so selecting the same file again still fires 'change'
                 event.target.value = '';
@@ -270,12 +437,8 @@
 
     document.getElementById('excelFile').addEventListener('change', handleFile);
 
-    // Initial render
-    renderCharts(defaultWeeks, defaultQtyAcc, defaultValAcc, defaultBookValue);
-    populateTable(defaultRecent);
-</script>
-</body>
-</html>
+    // Initial render — shows saved (previously uploaded) data if present, else sample defaults
+    loadSavedOrDefault();
 </script>
 </body>
 </html>
