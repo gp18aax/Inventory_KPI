@@ -156,7 +156,7 @@
         week: ['Week', 'week', 'WEEK'],
         counted: ['Counted', 'counted', 'Items Counted', 'ItemsCounted'],
         qtyAcc: ['Qty Acc', 'Qty Accuracy', 'qtyAcc', 'Quantity Accuracy'],
-        valAcc: ['Value Acc', 'Qty Accuracy Target', 'valAcc', 'ValueAccuracy'],
+        valAcc: ['Qty Accuracy Target', 'Qty Accuracy Target', 'valAcc', 'ValueAccuracy'],
         binAcc: ['Bin Acc', 'Bin Accuracy', 'binAcc', 'BinAccuracy'],
         bookValue: ['Book Value', 'BookValue', 'bookValue', 'Value ($K)', 'Value'],
         variance: ['Variance', 'variance', 'Abs Variance', 'AbsVariance', 'Absolute Variance']
@@ -187,7 +187,7 @@
                 labels: weeks,
                 datasets: [
                     { label: 'Qty Accuracy', data: qtyAcc, borderColor: '#10b981', tension: 0.4, borderWidth: 4 },
-                    { label: 'Value Accuracy', data: valAcc, borderColor: '#3b82f6', tension: 0.4, borderWidth: 4 }
+                    { label: 'Qty Accuracy Target', data: valAcc, borderColor: '#3b82f6', tension: 0.4, borderWidth: 4 }
                 ]
             },
             options: { responsive: true, plugins: { legend: { position: 'top' } } }
